@@ -1,0 +1,118 @@
+name: Run Script on Teleport Node
+
+on:
+  workflow_dispatch:
+    inputs:
+      node_ip:
+        description: 'Node IP address'
+        required: true
+        type: choice
+        options:
+          - '172.31.0.160'
+          - '172.31.0.81'
+      script:
+        description: 'Command to run on the node'
+        required: true
+        default: 'hostname && uptime && df -h'
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    name: Execute script on Teleport node
+    
+    steps:
+      - name: Install Teleport
+        run: |
+          echo "📥 Installing Teleport..."
+          curl -O https://cdn.teleport.dev/teleport-v14.3.3-linux-amd64-bin.tar.gz
+          tar -xzf teleport-v14.3.3-linux-amd64-bin.tar.gz
+          sudo ./teleport/install
+          teleport version
+          
+      - name: Login to Teleport using Bot
+        run: |
+          echo "🤖 Starting Teleport bot..."
+          mkdir -p /tmp/teleport-bot
+          
+          # Start bot in background
+          teleport bot start \
+            --token="${{ secrets.TELEPORT_BOT_TOKEN }}" \
+            --proxy-server="${{ secrets.TELEPORT_PROXY }}" \
+            --ca-pin="${{ secrets.TELEPORT_CA_PIN }}" \
+            --destination-dir=/tmp/teleport-bot \
+            --data-dir=/tmp/bot-data \
+            --join-method=token &
+          
+          # Wait for bot to get credentials
+          echo "⏳ Waiting for bot credentials..."
+          sleep 20
+          
+          # Verify credentials exist
+          if [ ! -f "/tmp/teleport-bot/identity" ]; then
+            echo "❌ Failed to get bot credentials"
+            exit 1
+          fi
+          
+          echo "✅ Bot authenticated successfully"
+          
+      - name: List Available Nodes
+        run: |
+          echo "📋 Available nodes in cluster:"
+          export TELEPORT_IDENTITY_FILE=/tmp/teleport-bot/identity
+          tsh ls
+          
+      - name: Run Script on Node
+        run: |
+          echo "🚀 Running script on node: ${{ inputs.node_ip }}"
+          echo "📝 Script: ${{ inputs.script }}"
+          echo ""
+          
+          export TELEPORT_IDENTITY_FILE=/tmp/teleport-bot/identity
+          
+          # Find node hostname by IP
+          NODE_HOST=$(tsh ls --format=json | jq -r '.[] | select(.addr | contains("${{ inputs.node_ip }}")) | .host_name')
+          
+          if [ -z "$NODE_HOST" ]; then
+            echo "❌ No node found with IP: ${{ inputs.node_ip }}"
+            echo "Available nodes:"
+            tsh ls
+            exit 1
+          fi
+          
+          echo "✅ Found node: $NODE_HOST"
+          echo ""
+          echo "=== Script Output ==="
+          tsh ssh ubuntu@${NODE_HOST} "${{ inputs.script }}"
+          echo "=== End Output ==="
+          
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "🧹 Cleaning up..."
+          pkill teleport || true
+          rm -rf /tmp/teleport-bot /tmp/bot-data
+```
+
+4. **Click:** "Commit changes"
+
+5. **Add commit message:**
+```
+   Add Teleport automation workflow
+```
+
+6. **Click:** "Commit changes" again
+
+---
+
+## Part 5: Run the Workflow! 🎉
+
+1. **Go to:** Actions tab (in your repo)
+
+2. **Click:** "Run Script on Teleport Node" (left sidebar)
+
+3. **Click:** "Run workflow" (right side, blue button)
+
+4. **Fill in the form:**
+```
+   Node IP address: 172.31.0.160  (select from dropdown)
+   Command to run: hostname && uptime && whoami

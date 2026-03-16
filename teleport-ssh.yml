@@ -1,0 +1,33 @@
+name: Teleport Machine ID SSH
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  execute-remote-command:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Crucial for GitHub OIDC
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Teleport Tooling
+        uses: teleport-actions/setup@v1
+        with:
+          version: 14.3.3
+          proxy: myteleport3.duckdns.org:3080
+
+      - name: Fetch Short-lived Credentials
+        uses: teleport-actions/auth@v2
+        id: auth
+        with:
+          proxy: myteleport3.duckdns.org:3080
+          token: github-action-token
+
+      - name: Execute Remote Uptime Check
+        run: |
+          tsh ssh -i ${{ steps.auth.outputs.identity-file }} \
+          ubuntu@node-02.myteleport3.duckdns.org "uptime"

@@ -23,10 +23,12 @@ jobs:
       - name: Fetch Short-lived Credentials
         uses: teleport-actions/auth@v1
         id: auth
+        env:
+          TELEPORT_INSECURE: "true"
         with:
           proxy: myteleport3.duckdns.org:3080
           token: github-action-token
-          ca-pin: sha256:6bdd44d65d51e7df8f9034a71f87f1b0df80d24d0ddfc62df891048839e028e3
+          ca-pins: "sha256:6bdd44d65d51e7df8f9034a71f87f1b0df80d24d0ddfc62df891048839e028e3"
 
       - name: Execute Remote Uptime Check
         run: |

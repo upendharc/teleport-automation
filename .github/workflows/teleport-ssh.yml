@@ -26,6 +26,7 @@ jobs:
         with:
           proxy: myteleport3.duckdns.org:3080
           token: github-action-token
+          ca-pin: "sha256:6bdd44d65d51e7df8f9034a71f87f1b0df80d24d0ddfc62df891048839e028e3"
 
       - name: Execute Remote Uptime Check
         run: |

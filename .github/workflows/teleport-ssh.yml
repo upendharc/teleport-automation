@@ -21,7 +21,7 @@ jobs:
           proxy: myteleport3.duckdns.org:3080
 
       - name: Fetch Short-lived Credentials
-        uses: teleport-actions/auth@v2
+        uses: teleport-actions/auth@v1
         id: auth
         with:
           proxy: myteleport3.duckdns.org:3080

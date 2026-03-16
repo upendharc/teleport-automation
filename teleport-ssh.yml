@@ -21,13 +21,20 @@ jobs:
           proxy: myteleport3.duckdns.org:3080
 
       - name: Fetch Short-lived Credentials
-        uses: teleport-actions/auth@v2
+        # Use v1 to match your Teleport 14.3.3 cluster
+        uses: teleport-actions/auth@v1 
         id: auth
+        env:
+          # Force tbot to ignore the self-signed/DuckDNS certificate error
+          TELEPORT_INSECURE: "true"
         with:
           proxy: myteleport3.duckdns.org:3080
           token: github-action-token
+          # Ensure this matches your 'sudo tctl status' output
+          ca-pins: "sha256:6bdd44d65d51e7df8f9034a71f87f1b0df80d24d0ddfc62df891048839e028e3"
 
       - name: Execute Remote Uptime Check
         run: |
-          tsh ssh -i ${{ steps.auth.outputs.identity-file }} \
+          # Added --insecure here so tsh can talk to the proxy as well
+          tsh ssh --insecure -i ${{ steps.auth.outputs.identity-file }} \
           ubuntu@node-02.myteleport3.duckdns.org "uptime"

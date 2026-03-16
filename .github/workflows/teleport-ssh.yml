@@ -25,11 +25,11 @@ jobs:
         id: auth
         env:
           TELEPORT_INSECURE: "true"
+          TELEPORT_PROXY: "myteleport3.duckdns.org:3080"
         with:
           proxy: myteleport3.duckdns.org:3080
           token: github-action-token
 
       - name: Execute Remote Uptime Check
-        run: |
-          tsh ssh -i ${{ steps.auth.outputs.identity-file }} \
-          ubuntu@node-02.myteleport3.duckdns.org "uptime"
+  run: ssh -F ${{ steps.auth.outputs.ssh-config }} ubuntu@node-02.myteleport3.duckdns.org "uptime"
+

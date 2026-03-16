@@ -23,8 +23,7 @@ jobs:
       - name: Fetch Short-lived Credentials
         uses: teleport-actions/auth@v1
         id: auth
-        env:
-          TELEPORT_INSECURE: "true"
+        
         with:
           proxy: myteleport3.duckdns.org:3080
           token: github-action-token
